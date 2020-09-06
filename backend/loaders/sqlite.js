@@ -22,7 +22,7 @@ const database = async () => {
   try {
     await db.run(`CREATE TABLE IF NOT EXISTS Messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      content TEXT NOT NULL,
+      text TEXT NOT NULL,
       author TEXT NOT NULL,
       timestamp TEXT NOT NULL,
       room_id integer NOT NULL, FOREIGN KEY (room_id) REFERENCES Rooms (id))`);    
