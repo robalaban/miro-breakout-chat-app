@@ -5,6 +5,7 @@ var http = require('http').Server(app)
 var socketConfig = require('./config');
 var io = require('socket.io')(http, socketConfig)
 var port = process.env.PORT || 8081
+var database = require('./loaders/sqlite')
 
 var rooms = {}
 var roomsCreatedAt = new WeakMap()
@@ -78,6 +79,7 @@ io.on('connection', socket => {
   })
 })
 
-http.listen(port, '0.0.0.0', () => {
+http.listen(port, '0.0.0.0', async () => {
+  await database();
   console.log('listening on *:' + port)
 })
