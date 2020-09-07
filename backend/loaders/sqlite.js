@@ -1,9 +1,14 @@
+const fs = require('fs')
 const Database = require('sqlite-async');
+
+const filePath = './database/breakoutchat.db'
 
 const database = async () => {
 
+  fs.closeSync(fs.openSync(filePath, 'a'))
+
   try {
-      db = await Database.open('./database/breakoutchat.db')
+      db = await Database.open(filePath)
   } catch (error) {
       throw Error('Cannot access Database', error);
   }
