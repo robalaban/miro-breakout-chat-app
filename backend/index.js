@@ -7,7 +7,7 @@ var io = require('socket.io')(http, socketConfig)
 var port = process.env.PORT || 8081
 var sqlite = require('./loaders/sqlite')
 const { saveMessage, retrieveMessages } = require('./services/message')
-const { createUpdateRoom } = require('./services/room')
+const { createUpdateRoom, getRooms} = require('./services/room')
 
 var database
 var rooms = {}
@@ -33,8 +33,13 @@ app.get('/rooms/:roomId', (req, res) => {
   }
 })
 
-app.get('/rooms', (req, res) => {
-  res.json(Object.keys(rooms))
+app.get('/rooms', async (req, res) => {
+  let rooms = await getRooms(database, 'active');
+  if (Object.keys(rooms).length !== 0) {
+    res.json(Object.keys(rooms))
+  }
+
+  res.send('No active rooms!')
 })
 
 io.on('connection', socket => {
