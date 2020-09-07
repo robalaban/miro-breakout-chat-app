@@ -1,11 +1,12 @@
 import { APP_ID } from '../config';
 import appIcon from './icon';
+import loadBreakoutWidgets from './helpers'
 
-const initChat = (breakoutChatRoomId: string) => {
-  miro.__setRuntimeState({
-    [APP_ID]: {
-      breakoutChatRoomId,
-    },
+const initChat = async (breakoutChatRoomId: string) => {
+  const breakoutWidgets = await loadBreakoutWidgets();
+  await miro.__setRuntimeState({
+    'breakoutWidgets': breakoutWidgets,
+    [APP_ID]: { breakoutChatRoomId }
   });
 
   miro.board.ui.closeLeftSidebar();
@@ -43,6 +44,9 @@ const handleAddChatClick = async () => {
 };
 
 const initPlugin = async () => {
+  const breakoutWidgets = await loadBreakoutWidgets();
+  await miro.__setRuntimeState({'breakoutWidgets': breakoutWidgets});
+
   // @ts-ignore
   miro.addListener(miro.enums.event.SELECTION_UPDATED, async () => {
     const widgets = await miro.board.selection.get();
@@ -51,6 +55,15 @@ const initPlugin = async () => {
       widgets[0].metadata[APP_ID]?.isBreakoutChatButton
     ) {
       initChat(widgets[0].id);
+    }
+  });
+
+  // @ts-ignore
+  miro.addListener(miro.enums.event.WIDGETS_DELETED, async (widget) => {
+    const state = await miro.__getRuntimeState();
+    if (state.breakoutWidgets.includes(widget.data[0].id)) {
+      miro.board.ui.closeLeftSidebar();
+      await loadBreakoutWidgets();
     }
   });
 
@@ -68,7 +81,7 @@ const initPlugin = async () => {
 miro.onReady(async () => {
   const authorized = await miro.isAuthorized();
   if (authorized) {
-    initPlugin();
+    await initPlugin();
   } else {
     const res = await miro.board.ui.openModal('not-authorized.html');
     if (res === 'success') {
