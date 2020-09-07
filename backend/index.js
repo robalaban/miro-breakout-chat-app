@@ -15,6 +15,7 @@ var roomsCreatedAt = new WeakMap()
 var names = new WeakMap()
 var roomId
 var name
+var chatRoomMessages
 
 app.use(cors())
 
@@ -49,6 +50,7 @@ io.on('connection', socket => {
     roomId = _roomId;
     name = _name;
     await createUpdateRoom(database, roomId)
+    chatRoomMessages = await retrieveMessages(database, roomId)
 
     if (rooms[roomId]) {
       rooms[roomId][socket.id] = socket
@@ -61,6 +63,7 @@ io.on('connection', socket => {
     names.set(socket, name)
 
     io.to(roomId).emit('system message', `${name} joined ${roomId}`)
+    io.to(roomId).emit('room messages', chatRoomMessages)
 
     if (callback) {
       callback(null, { success: true })
