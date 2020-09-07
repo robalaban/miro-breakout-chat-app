@@ -5,8 +5,11 @@ var http = require('http').Server(app)
 var socketConfig = require('./config');
 var io = require('socket.io')(http, socketConfig)
 var port = process.env.PORT || 8081
-var database = require('./loaders/sqlite')
+var sqlite = require('./loaders/sqlite')
+const { saveMessage, retrieveMessages } = require('./services/message')
+const { createUpdateRoom } = require('./services/room')
 
+var database
 var rooms = {}
 var roomsCreatedAt = new WeakMap()
 var names = new WeakMap()
@@ -34,7 +37,7 @@ app.get('/rooms', (req, res) => {
 })
 
 io.on('connection', socket => {
-  socket.on('join', (_roomId, _name, callback) => {
+  socket.on('join', async (_roomId, _name, callback) => {
     if (!_roomId || !_name) {
       if (callback) {
         callback('roomId and name params required')
@@ -45,6 +48,7 @@ io.on('connection', socket => {
 
     roomId = _roomId;
     name = _name;
+    await createUpdateRoom(database, roomId)
 
     if (rooms[roomId]) {
       rooms[roomId][socket.id] = socket
@@ -65,6 +69,7 @@ io.on('connection', socket => {
 
   socket.on('chat message', msg => {
     io.to(roomId).emit('chat message', msg, name)
+    saveMessage(database, roomId, msg, name)
   })
 
   socket.on('disconnect', () => {
@@ -80,6 +85,6 @@ io.on('connection', socket => {
 })
 
 http.listen(port, '0.0.0.0', async () => {
-  await database();
+  database = await sqlite();
   console.log('listening on *:' + port)
 })
