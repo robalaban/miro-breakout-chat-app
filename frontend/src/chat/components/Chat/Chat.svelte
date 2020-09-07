@@ -2,7 +2,14 @@
     import { onMount, afterUpdate, tick } from 'svelte';
     import Message from './Message.svelte';
 
-    import type { MessageHandler, EmitHandler, Message as MessageInterface, ChatController, ChatSettings } from '../../interfaces/chat';
+    import type { 
+        MessageHandler, 
+        EmitHandler, 
+        Message as MessageInterface, 
+        ChatController, 
+        ChatSettings,
+        ChatMessagesHandler,
+    } from '../../interfaces/chat';
 
     export let chatFactory: (settings: ChatSettings) => ChatController;
     export let roomId: string;
@@ -13,8 +20,18 @@
     let chatController: ChatController = null;
 
     let messages: Array<MessageInterface> = [];
+
+    const handleExistingMessages: ChatMessagesHandler = async(upstreamMessages) => {
+        messages = upstreamMessages
+        await tick();
+    }
+
     const handleNewMessage: MessageHandler = async (text, author) => {
-        messages = [...messages, { text, author, timestamp: new Date() }];
+        messages = [...messages, { 
+            text, 
+            author, 
+            timestamp: new Date().toLocaleTimeString().slice(0, 5) 
+        }];
         await tick();
         let chat = document.querySelectorAll('.sidebar__body')[0];
         chat.scrollTop = chat.scrollHeight;
@@ -30,7 +47,12 @@
     }
 
     onMount(() => {
-        chatController = chatFactory({ roomId, name, messageHandler: handleNewMessage });
+        chatController = chatFactory({ 
+            roomId, 
+            name, 
+            messageHandler: handleNewMessage, 
+            chatMessagesHandler: handleExistingMessages
+        });
     });
 </script>
 
